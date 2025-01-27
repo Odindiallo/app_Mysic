@@ -9,20 +9,28 @@ Features:
 1. Modern, responsive design with Tailwind CSS
 2. Interactive music player
 3. Sample songs showcase
-4. Custom song request form with:
+4. Custom song request workflow with:
+   - Multi-step form process
    - Customer details collection
    - Song preferences selection
-   - Delivery options
+   - Review step
+   - Payment integration
+   - Success/Error handling
    - Form validation
-5. Clean, minimalist UI with consistent pink-to-rose gradient theme
+5. State Management with Zustand
+6. Smooth page transitions and animations
+7. Clean, minimalist UI with consistent pink-to-rose gradient theme
 
 Technologies Used:
 - Next.js 14
 - React 18
 - Tailwind CSS
-- Framer Motion
+- Framer Motion (for animations)
 - TypeScript
 - Radix UI Components
+- Zustand (state management)
+- Zod (form validation)
+- React Hook Form
 
 Pages:
 1. Home Page (/)
@@ -33,12 +41,21 @@ Pages:
    - FAQ
    - Contact
 
-2. Create Custom Song (/create-song)
-   - Customer information form
-   - Song details selection
-   - Delivery preferences
-   - Real-time form validation
-   - Success confirmation
+2. Create Custom Song Flow:
+   - Details Page (/create-song)
+     * Customer information form
+     * Song details selection
+     * Delivery preferences
+   - Review Page (/create-song/review)
+     * Order summary
+     * Edit capabilities
+   - Payment Page (/create-song/payment)
+     * Secure payment processing
+   - Success Page (/create-song/success)
+     * Order confirmation
+   - Error Page (/create-song/error)
+     * Error handling
+     * Retry options
 
 PREREQUISITES
 ------------
@@ -89,51 +106,35 @@ $ yarn lint
 PROJECT STRUCTURE
 ----------------
 musique-app/
-├── components/    - Reusable UI components
-├── pages/        - Next.js pages and API routes
+├── app/          - Next.js 14 app directory
+│   ├── create-song/  - Song creation flow pages
+│   │   ├── error/    - Error handling page
+│   │   ├── payment/  - Payment processing
+│   │   ├── review/   - Order review
+│   │   └── success/  - Success confirmation
+├── components/   - Reusable UI components
+│   ├── forms/       - Form components
+│   ├── ui/          - UI components
+│   └── sections/    - Page sections
+├── store/        - Zustand state management
 ├── public/       - Static files
 ├── styles/       - Global styles and Tailwind config
 ├── types/        - TypeScript type definitions
-├── utils/        - Utility functions
+├── lib/          - Utility functions and constants
 └── config files
 
 TROUBLESHOOTING
 --------------
-Common Issues and Solutions:
+1. If you encounter module not found errors:
+   - Delete node_modules and package-lock.json
+   - Run npm install again
 
-1. Installation Errors:
-   - Clear npm cache:
-     $ npm cache clean --force
-   
-   - Reinstall dependencies:
-     $ rm -rf node_modules
-     $ npm install
+2. For state persistence issues:
+   - Clear browser local storage
+   - Refresh the page
 
-2. Build Errors:
-   - Clear Next.js cache:
-     $ rm -rf .next
-     $ npm run build
+3. For animation performance:
+   - Ensure you're using a modern browser
+   - Check if hardware acceleration is enabled
 
-3. Styling Issues:
-   - Ensure Tailwind is generating styles:
-     $ npm run dev
-   - Check if styles are imported in globals.css
-
-Debug Mode:
-$ NODE_OPTIONS='--inspect' npm run dev
-
-CONTRIBUTING
------------
-1. Fork the repository
-2. Create a feature branch: git checkout -b feature/YourFeature
-3. Commit changes: git commit -m 'Add YourFeature'
-4. Push to branch: git push origin feature/YourFeature
-5. Submit a Pull Request
-
-LICENSE
--------
-This project is licensed under the MIT License.
-
-For additional help or reporting issues:
-- GitHub Issues: https://github.com/yourusername/musique-app/issues
-- Documentation: https://your-docs-link.com
+For more help, visit our GitHub repository or contact support.
