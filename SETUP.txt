@@ -1,0 +1,112 @@
+MUSIQUE APP - SETUP INSTRUCTIONS
+================================
+
+PROJECT OVERVIEW
+---------------
+Musique App is a modern web application for discovering and playing music samples. It features a clean, intuitive interface with smooth animations and responsive design.
+
+Technologies Used:
+- Next.js 14
+- React 18
+- Tailwind CSS
+- Framer Motion
+- TypeScript
+- Radix UI Components
+
+PREREQUISITES
+------------
+Required Software:
+1. Node.js (version 18.0.0 or higher)
+2. npm (version 8.0.0 or higher) or yarn
+
+To check your versions:
+$ node --version
+$ npm --version
+
+INSTALLATION STEPS
+-----------------
+1. Clone the Repository:
+   $ git clone https://github.com/yourusername/musique-app.git
+   $ cd musique-app
+
+2. Install Dependencies:
+   $ npm install
+   # or with yarn:
+   $ yarn install
+
+3. Environment Setup:
+   Create a file named '.env.local' in the root directory with:
+   NEXT_PUBLIC_API_URL=your_api_url_here
+
+RUNNING THE PROJECT
+------------------
+Development Mode:
+$ npm run dev
+# or
+$ yarn dev
+
+Open http://localhost:3000 in your browser
+
+Production Build:
+$ npm run build
+$ npm start
+# or
+$ yarn build
+$ yarn start
+
+Code Linting:
+$ npm run lint
+# or
+$ yarn lint
+
+PROJECT STRUCTURE
+----------------
+musique-app/
+├── components/    - Reusable UI components
+├── pages/        - Next.js pages and API routes
+├── public/       - Static files
+├── styles/       - Global styles and Tailwind config
+├── types/        - TypeScript type definitions
+├── utils/        - Utility functions
+└── config files
+
+TROUBLESHOOTING
+--------------
+Common Issues and Solutions:
+
+1. Installation Errors:
+   - Clear npm cache:
+     $ npm cache clean --force
+   
+   - Reinstall dependencies:
+     $ rm -rf node_modules
+     $ npm install
+
+2. Build Errors:
+   - Clear Next.js cache:
+     $ rm -rf .next
+     $ npm run build
+
+3. Styling Issues:
+   - Ensure Tailwind is generating styles:
+     $ npm run dev
+   - Check if styles are imported in globals.css
+
+Debug Mode:
+$ NODE_OPTIONS='--inspect' npm run dev
+
+CONTRIBUTING
+-----------
+1. Fork the repository
+2. Create a feature branch: git checkout -b feature/YourFeature
+3. Commit changes: git commit -m 'Add YourFeature'
+4. Push to branch: git push origin feature/YourFeature
+5. Submit a Pull Request
+
+LICENSE
+-------
+This project is licensed under the MIT License.
+
+For additional help or reporting issues:
+- GitHub Issues: https://github.com/yourusername/musique-app/issues
+- Documentation: https://your-docs-link.com
