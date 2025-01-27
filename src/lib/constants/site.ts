@@ -4,11 +4,11 @@ export const siteConfig = {
   mainNav: [
     {
       title: 'How It Works',
-      href: '/how-it-works',
+      href: '/#how-it-works',
     },
     {
       title: 'Sample Songs',
-      href: '/sample-songs',
+      href: '/#sample-songs',
     },
     {
       title: 'Testimonials',
@@ -16,11 +16,11 @@ export const siteConfig = {
     },
     {
       title: 'FAQ',
-      href: '/faq',
+      href: '/#faq',
     },
     {
       title: 'Contact',
-      href: '/contact',
+      href: '/#contact',
     },
   ],
   links: {

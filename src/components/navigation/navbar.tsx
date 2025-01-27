@@ -49,19 +49,20 @@ export function Navbar() {
               {item.title}
             </Link>
           ))}
-          <Button className="bg-rose-500 hover:bg-rose-600">
-            Create Your Song
-          </Button>
+          <Link href="/create-song">
+            <Button className="bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600 transition-all duration-200">
+              Create Your Song
+            </Button>
+          </Link>
         </div>
 
         {/* Mobile Menu Button */}
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden p-2"
-          aria-label="Toggle menu"
+          className="md:hidden p-2 rounded-lg hover:bg-gray-100"
         >
           <svg
-            className="w-6 h-6 text-gray-600"
+            className="w-6 h-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -83,35 +84,41 @@ export function Navbar() {
             )}
           </svg>
         </button>
-      </nav>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-t"
-          >
-            <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-gray-600 hover:text-rose-500 transition-colors py-2 font-medium"
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-16 left-0 right-0 bg-white shadow-lg md:hidden"
+            >
+              <div className="py-4 px-4 space-y-3">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="block py-2 text-gray-600 hover:text-rose-500 transition-colors font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.title}
+                  </Link>
+                ))}
+                <Link 
+                  href="/create-song"
                   onClick={() => setIsMobileMenuOpen(false)}
+                  className="block"
                 >
-                  {item.title}
+                  <Button className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600 transition-all duration-200">
+                    Create Your Song
+                  </Button>
                 </Link>
-              ))}
-              <Button className="bg-rose-500 hover:bg-rose-600 w-full">
-                Create Your Song
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
     </header>
   );
 }

@@ -129,8 +129,8 @@ export default function HeroSection() {
                 className="group text-base h-14 px-8 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 shadow-lg shadow-rose-500/25 transition-all duration-300 focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 rounded-2xl" 
                 asChild
               >
-                <Link href="#how-it-works">
-                  Get Started Now
+                <Link href="/create-song">
+                  Create Your Song
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
                 </Link>
               </Button>

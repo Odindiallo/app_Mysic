@@ -227,7 +227,10 @@ export default function SampleSongs() {
   useOutsideClick(ref, () => setActive(null));
 
   return (
-    <section className="relative py-32 overflow-hidden bg-white">
+    <section 
+      id="sample-songs"
+      className="relative bg-white py-24 overflow-hidden"
+    >
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,black,transparent)]" />
       </div>

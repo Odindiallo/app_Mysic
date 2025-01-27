@@ -1,6 +1,9 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 
 const steps = [
   {
@@ -48,7 +51,10 @@ const steps = [
 
 export default function HowItWorksSection() {
   return (
-    <section className="relative bg-gradient-to-b from-white to-rose-50/30 py-24 overflow-hidden">
+    <section 
+      id="how-it-works"
+      className="relative bg-gradient-to-b from-white to-rose-50/30 py-24 overflow-hidden"
+    >
       <div className="container relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -128,20 +134,30 @@ export default function HowItWorksSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.5, delay: 0.8 }}
           className="text-center mt-16"
         >
-          <button className="bg-gradient-to-r from-rose-500 via-rose-400 to-rose-500 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
-            Start Creating Your Song
-          </button>
+          <p className="text-lg text-gray-600 mb-8">
+            Ready to create something special? Start your musical journey today!
+          </p>
+          <Button 
+            size="lg" 
+            className="group text-base h-14 px-8 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 shadow-lg shadow-rose-500/25 transition-all duration-300 focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 rounded-2xl" 
+            asChild
+          >
+            <Link href="/create-song">
+              Create Your Custom Song
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+            </Link>
+          </Button>
         </motion.div>
       </div>
 
       {/* Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-0 w-64 h-64 bg-rose-200/20 rounded-full filter blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-blue-200/20 rounded-full filter blur-3xl" />
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-rose-200/20 rounded-full mix-blend-multiply filter blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-200/20 rounded-full mix-blend-multiply filter blur-3xl" />
       </div>
     </section>
   )

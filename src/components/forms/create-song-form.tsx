@@ -23,6 +23,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { useSongStore } from '@/store/song-store'
 
 const formSchema = z.object({
   // Customer Details
@@ -49,23 +52,32 @@ const occasions = [
 
 const genres = [
   'Pop', 'Rock', 'R&B', 'Jazz', 'Classical', 'Folk',
-  'Country', 'Hip Hop', 'Electronic'
+  'Country', 'Hip Hop', 'Electronic', 'Other'
 ]
 
 const moods = [
-  'Happy', 'Romantic', 'Sentimental', 'Energetic',
-  'Calm', 'Inspirational', 'Playful'
+  'Happy', 'Romantic', 'Energetic', 'Calm',
+  'Emotional', 'Upbeat', 'Melancholic', 'Other'
 ]
 
-const formats = ['MP3', 'WAV', 'Video with Music']
+const formats = [
+  'MP3', 'WAV', 'Both MP3 & WAV'
+]
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+}
 
 export function CreateSongForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const { setFormData, formData } = useSongStore()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: formData || {
       name: '',
       email: '',
       phone: '',
@@ -80,265 +92,257 @@ export function CreateSongForm() {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true)
     try {
-      setIsSubmitting(true)
-      // Here you would typically send the data to your API
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulated API call
-      console.log(values)
-      setSubmitSuccess(true)
+      setFormData(values)
+      router.push('/create-song/review')
     } catch (error) {
       console.error('Error submitting form:', error)
     } finally {
-      setIsSubmitting(false)
+      setIsLoading(false)
     }
-  }
-
-  if (submitSuccess) {
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent mb-4">
-          Thank you! Your request has been submitted.
-        </h2>
-        <p className="text-gray-600 mb-6">
-          We&apos;ll get started on your song right away.
-        </p>
-        <Button
-          onClick={() => setSubmitSuccess(false)}
-          variant="outline"
-          className="hover:bg-gray-50 transition-colors duration-200"
-        >
-          Submit Another Request
-        </Button>
-      </div>
-    )
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {/* Customer Details Section */}
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">Customer Details</h2>
-          
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Your name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Customer Details */}
+          <motion.div
+            {...fadeInUp}
+            transition={{ delay: 0.1 }}
+          >
+            <h2 className="text-xl font-semibold mb-4">Customer Details</h2>
+            <div className="grid gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="your@email.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="+1 234 567 8900" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </motion.div>
 
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="your.email@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Song Details */}
+          <motion.div
+            {...fadeInUp}
+            transition={{ delay: 0.2 }}
+          >
+            <h2 className="text-xl font-semibold mb-4">Song Details</h2>
+            <div className="grid gap-4">
+              <FormField
+                control={form.control}
+                name="occasion"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Occasion</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an occasion" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {occasions.map((occasion) => (
+                          <SelectItem key={occasion} value={occasion.toLowerCase()}>
+                            {occasion}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="genre"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Genre</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a genre" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {genres.map((genre) => (
+                          <SelectItem key={genre} value={genre.toLowerCase()}>
+                            {genre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="mood"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mood</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a mood" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {moods.map((mood) => (
+                          <SelectItem key={mood} value={mood.toLowerCase()}>
+                            {mood}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lyricsInspiration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lyrics Inspiration</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Tell us about the person and what makes them special..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      This will help us create personalized lyrics for your song.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="specialRequests"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Special Requests (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Any special requests or additional details..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </motion.div>
 
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone Number (Optional)</FormLabel>
-                <FormControl>
-                  <Input type="tel" placeholder="Your phone number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Delivery Preferences */}
+          <motion.div
+            {...fadeInUp}
+            transition={{ delay: 0.3 }}
+          >
+            <h2 className="text-xl font-semibold mb-4">Delivery Preferences</h2>
+            <div className="grid gap-4">
+              <FormField
+                control={form.control}
+                name="deliveryDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Delivery Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} min={new Date().toISOString().split('T')[0]} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="format"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Format</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a format" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {formats.map((format) => (
+                          <SelectItem key={format} value={format.toLowerCase()}>
+                            {format}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </motion.div>
         </div>
 
-        {/* Song Details Section */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">Song Details</h2>
-          
-          <FormField
-            control={form.control}
-            name="occasion"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Occasion</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an occasion" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent position="popper" className="w-full z-50">
-                    {occasions.map((occasion) => (
-                      <SelectItem key={occasion} value={occasion.toLowerCase()}>
-                        {occasion}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="genre"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Genre</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a genre" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent position="popper" className="w-full z-50">
-                    {genres.map((genre) => (
-                      <SelectItem key={genre} value={genre.toLowerCase()}>
-                        {genre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="mood"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mood</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a mood" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent position="popper" className="w-full z-50">
-                    {moods.map((mood) => (
-                      <SelectItem key={mood} value={mood.toLowerCase()}>
-                        {mood}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="lyricsInspiration"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Lyrics Inspiration</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Share your story, poem, or specific phrases you'd like us to include..."
-                    className="h-32"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Tell us about the story or message you want to convey through the song.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="specialRequests"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Special Requests (Optional)</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Any special requests or additional details..."
-                    className="h-24"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Include names, inside jokes, or any other special elements you'd like in the song.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Delivery Preferences Section */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">Delivery Preferences</h2>
-          
-          <FormField
-            control={form.control}
-            name="deliveryDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Desired Delivery Date</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Please allow at least 2 weeks for song creation.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="format"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Preferred Format</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a format" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent position="popper" className="w-full z-50">
-                    {formats.map((format) => (
-                      <SelectItem key={format} value={format.toLowerCase()}>
-                        {format}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <Button
-          type="submit"
-          className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600 transition-all duration-200"
-          disabled={isSubmitting}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
         >
-          {isSubmitting ? 'Submitting...' : 'Submit Request'}
-        </Button>
+          <Button 
+            type="submit" 
+            className="w-full bg-gradient-to-r from-rose-600 to-rose-500"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Processing...
+              </div>
+            ) : (
+              'Continue to Review'
+            )}
+          </Button>
+        </motion.div>
       </form>
     </Form>
   )
