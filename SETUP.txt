@@ -5,6 +5,17 @@ PROJECT OVERVIEW
 ---------------
 Musique App is a modern web application for discovering and playing music samples. It features a clean, intuitive interface with smooth animations and responsive design.
 
+Features:
+1. Modern, responsive design with Tailwind CSS
+2. Interactive music player
+3. Sample songs showcase
+4. Custom song request form with:
+   - Customer details collection
+   - Song preferences selection
+   - Delivery options
+   - Form validation
+5. Clean, minimalist UI with consistent pink-to-rose gradient theme
+
 Technologies Used:
 - Next.js 14
 - React 18
@@ -12,6 +23,22 @@ Technologies Used:
 - Framer Motion
 - TypeScript
 - Radix UI Components
+
+Pages:
+1. Home Page (/)
+   - Hero section
+   - How it works
+   - Sample songs
+   - Testimonials
+   - FAQ
+   - Contact
+
+2. Create Custom Song (/create-song)
+   - Customer information form
+   - Song details selection
+   - Delivery preferences
+   - Real-time form validation
+   - Success confirmation
 
 PREREQUISITES
 ------------
