@@ -142,3 +142,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Documentation](https://your-docs-link.com)
 - [Report Bug](https://github.com/yourusername/musique-app/issues)
 - [Request Feature](https://github.com/yourusername/musique-app/issues)
+
+## 🔒 Security Best Practices
+
+- Input validation using Zod
+- CSP headers configured via Next.js middleware
+- Sensitive data encrypted using Web Crypto API
+- Regular security audits using npm audit
+
+## 🧪 Testing Strategy
+
+- Jest/React Testing Library for unit tests
+- Cypress for E2E testing
+- Lighthouse CI for performance audits
+- Security scanning with Snyk

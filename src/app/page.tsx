@@ -11,21 +11,38 @@ import Contact from "@/components/sections/contact"
 
 export default async function Home() {
   return (
-    <main className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col space-y-16 md:space-y-24">
       {/* Hero Section */}
-      <HeroSection />
+      <section className="w-full">
+        <HeroSection />
+      </section>
 
       {/* How It Works Section */}
-      <HowItWorksSection />
+      <section className="w-full py-8 md:py-16">
+        <HowItWorksSection />
+      </section>
 
       {/* Sample Songs Section */}
-      <SampleSongs />
+      <section className="w-full py-8 md:py-16 bg-gray-50">
+        <SampleSongs />
+      </section>
 
       {/* Other Sections */}
-      <TestimonialsSection />
-      <PricingSection />
-      <FAQ />
-      <Contact />
-    </main>
+      <section className="w-full py-8 md:py-16">
+        <TestimonialsSection />
+      </section>
+
+      <section className="w-full py-8 md:py-16 bg-gray-50">
+        <PricingSection />
+      </section>
+
+      <section className="w-full py-8 md:py-16">
+        <FAQ />
+      </section>
+
+      <section className="w-full py-8 md:py-16 bg-gray-50">
+        <Contact />
+      </section>
+    </div>
   )
 }

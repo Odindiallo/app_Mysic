@@ -2,72 +2,23 @@
 
 import { motion } from "framer-motion";
 import { Check, Music, Clock, Star, Download, Sparkles } from "lucide-react";
+import { PRICING_TIERS } from "@/constants/pricing";
+import Link from "next/link";
+import { useSongStore } from "@/store/song-store";
+import { useRouter } from "next/navigation";
+import { GetStartedButton } from "@/components/buttons/get-started-button";
 
-const tiers = [
-  {
-    name: "Single Song",
-    price: 39.99,
-    songsIncluded: 1,
-    pricePerSong: 39.99,
-    description: "Perfect for a special occasion",
-    features: [
-      "1 custom song",
-      "Up to 2-minute song length",
-      "1 revision included",
-      "Basic arrangement",
-      "Digital delivery within 72 hours",
-      "MP3 format",
-      "Personal use license",
-    ],
-    icon: Music,
-    popular: false,
-  },
-  {
-    name: "Triple Bundle",
-    price: 99.99,
-    songsIncluded: 3,
-    pricePerSong: 33.33,
-    description: "Ideal for multiple occasions",
-    features: [
-      "3 custom songs",
-      "Save 17% per song",
-      "Up to 3-minute song length each",
-      "2 revisions per song",
-      "Professional arrangement",
-      "Priority delivery within 48 hours",
-      "MP3 & WAV formats",
-      "Personal use license",
-      "Instrumental versions included",
-    ],
-    icon: Star,
-    popular: true,
-    savings: "Save $20 per song",
-  },
-  {
-    name: "Studio Pack",
-    price: 149.99,
-    songsIncluded: 5,
-    pricePerSong: 30,
-    description: "Best value for multiple songs",
-    features: [
-      "5 custom songs",
-      "Save 25% per song",
-      "Up to 4-minute song length each",
-      "Unlimited revisions",
-      "Premium arrangement",
-      "Express delivery within 24 hours",
-      "All audio formats",
-      "Commercial use license",
-      "Professional mixing & mastering",
-      "Social media license included",
-    ],
-    icon: Sparkles,
-    popular: false,
-    savings: "Save $50 per song",
-  },
-];
+const tiers = PRICING_TIERS;
 
 export default function PricingSection() {
+  const { setFormData } = useSongStore();
+  const router = useRouter();
+
+  const handlePlanSelect = (planType: string) => {
+    setFormData({ plan: planType } as any);
+    router.push(`/create-song?plan=${planType}`);
+  };
+
   return (
     <section className="py-16 bg-gradient-to-br from-rose-50 via-white to-rose-50" id="pricing">
       <div className="container px-4 mx-auto">
@@ -141,9 +92,9 @@ export default function PricingSection() {
 
                   {/* Features */}
                   <div className="space-y-3 flex-grow min-h-[280px]">
-                    {tier.features.map((feature) => (
-                      <div key={feature} className="flex items-start gap-2 text-sm group/item">
-                        <div className={`p-0.5 rounded-full transition-colors duration-300 ${
+                    {tier.features.map((feature, index) => (
+                      <div key={index} className="flex items-center gap-2 group/item">
+                        <div className={`flex-shrink-0 p-1 rounded-full transition-colors duration-300 ${
                           tier.popular 
                             ? "bg-rose-100 group-hover:bg-rose-200" 
                             : "bg-gray-100 group-hover:bg-rose-50"
@@ -159,17 +110,13 @@ export default function PricingSection() {
                     ))}
                   </div>
 
-                  {/* Button - Now at bottom */}
+                  {/* Button */}
                   <div className="mt-auto pt-6">
-                    <button
-                      className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-300 transform hover:scale-[1.02] ${
-                        tier.popular
-                          ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:from-rose-600 hover:to-rose-700 hover:shadow-lg hover:shadow-rose-100/50"
-                          : "bg-gray-900 text-white hover:bg-rose-600 hover:shadow-lg"
-                      }`}
-                    >
-                      Get Started
-                    </button>
+                    <GetStartedButton
+                      variant={tier.popular ? "gradient" : "default"}
+                      className="w-full"
+                      onClick={() => handlePlanSelect(tier.planType)}
+                    />
                   </div>
                 </div>
               </div>

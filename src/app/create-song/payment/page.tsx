@@ -20,6 +20,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { PRICING_TIERS } from '@/constants/pricing';
 
 const paymentSchema = z.object({
   cardNumber: z.string().min(16, 'Invalid card number'),
@@ -28,8 +29,11 @@ const paymentSchema = z.object({
   nameOnCard: z.string().min(2, 'Please enter the name on card'),
 })
 
+const RUSH_DELIVERY_FEE = 49.00;
+const TAX_RATE = 0.10; // 10% tax rate
+
 export default function PaymentPage() {
-  const { formData, setPaymentStatus, paymentStatus } = useSongStore()
+  const { formData, setPaymentStatus, paymentStatus, clearFormData } = useSongStore()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -63,6 +67,7 @@ export default function PaymentPage() {
       }
 
       setPaymentStatus({ isProcessing: false, success: true })
+      clearFormData() // Clear form data on successful payment
       router.push('/create-song/success')
     } catch (error) {
       setPaymentStatus({ 
@@ -73,87 +78,72 @@ export default function PaymentPage() {
       router.push('/create-song/error')
     } finally {
       setIsLoading(false)
+      form.reset() // Reset payment form
     }
   }
 
+  const handleBackToReview = () => {
+    form.reset() // Reset payment form when going back
+    router.push('/create-song/review')
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white pt-24">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-white via-gray-50 to-white pt-12 md:pt-24">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="container max-w-4xl mx-auto px-4 py-24 md:py-32 relative"
+        className="w-full max-w-4xl mx-auto px-4 py-8 md:py-16 relative"
       >
-        {/* Progress Steps */}
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mb-16"
+        {/* Back Button - Mobile Friendly */}
+        <Button
+          onClick={handleBackToReview}
+          variant="ghost"
+          className="mb-6 md:mb-8 text-sm md:text-base hover:bg-transparent hover:text-rose-600 transition-colors"
         >
-          <div className="flex items-center justify-between max-w-xs mx-auto">
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-sm font-medium">
-                <Check className="w-4 h-4" />
-              </div>
-              <div className="text-xs mt-2 text-gray-600">Details</div>
-            </div>
-            <div className="flex-1 h-1 bg-rose-600 mx-2"></div>
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-sm font-medium">
-                <Check className="w-4 h-4" />
-              </div>
-              <div className="text-xs mt-2 text-gray-600">Review</div>
-            </div>
-            <div className="flex-1 h-1 bg-rose-600 mx-2"></div>
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-sm font-medium">3</div>
-              <div className="text-xs mt-2 text-gray-600">Payment</div>
-            </div>
-          </div>
-        </motion.div>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Review
+        </Button>
 
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-rose-600 via-rose-500 to-rose-400 bg-clip-text text-transparent mb-4">
-            Complete Your Order
-          </h1>
-          <p className="text-lg text-gray-600">
-            Your custom song is just one step away!
-          </p>
-        </motion.div>
+        <div className="space-y-8">
+          {/* Payment Form */}
+          <Card className="p-4 md:p-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="nameOnCard"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm md:text-base">Name on Card</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            className="h-12 text-base" 
+                            placeholder="John Doe"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <motion.div 
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="md:col-span-2"
-          >
-            <Card className="p-6 md:p-8 mb-8">
-              <div className="flex items-center gap-2 mb-6">
-                <CreditCard className="w-5 h-5 text-rose-600" />
-                <h2 className="text-xl font-semibold">Payment Details</h2>
-              </div>
-
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
                     control={form.control}
                     name="cardNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Card Number</FormLabel>
+                        <FormLabel className="text-sm md:text-base">Card Number</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="1234 5678 9012 3456"
-                            {...field}
-                            disabled={isLoading}
-                          />
+                          <div className="relative">
+                            <Input 
+                              {...field} 
+                              className="h-12 text-base pl-12" 
+                              placeholder="1234 5678 9012 3456"
+                            />
+                            <CreditCard className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -166,12 +156,12 @@ export default function PaymentPage() {
                       name="expiryDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Expiry Date</FormLabel>
+                          <FormLabel className="text-sm md:text-base">Expiry Date</FormLabel>
                           <FormControl>
                             <Input 
+                              {...field} 
+                              className="h-12 text-base" 
                               placeholder="MM/YY"
-                              {...field}
-                              disabled={isLoading}
                             />
                           </FormControl>
                           <FormMessage />
@@ -184,12 +174,14 @@ export default function PaymentPage() {
                       name="cvc"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>CVC</FormLabel>
+                          <FormLabel className="text-sm md:text-base">CVC</FormLabel>
                           <FormControl>
                             <Input 
+                              {...field} 
+                              className="h-12 text-base" 
                               placeholder="123"
-                              {...field}
-                              disabled={isLoading}
+                              type="password"
+                              maxLength={3}
                             />
                           </FormControl>
                           <FormMessage />
@@ -197,93 +189,67 @@ export default function PaymentPage() {
                       )}
                     />
                   </div>
+                </div>
 
-                  <FormField
-                    control={form.control}
-                    name="nameOnCard"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name on Card</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="John Doe"
-                            {...field}
-                            disabled={isLoading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
+                <div className="pt-4 border-t">
                   <Button 
                     type="submit" 
-                    className="w-full bg-gradient-to-r from-rose-600 to-rose-500"
+                    className="w-full h-12 text-base font-medium"
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="flex items-center">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="mr-2"
+                        >
+                          <Lock className="w-4 h-4" />
+                        </motion.div>
                         Processing...
                       </div>
                     ) : (
-                      'Pay Now'
+                      <div className="flex items-center">
+                        <Lock className="w-4 h-4 mr-2" />
+                        Pay Securely
+                      </div>
                     )}
                   </Button>
-                </form>
-              </Form>
-            </Card>
-          </motion.div>
+                </div>
+              </form>
+            </Form>
+          </Card>
 
-          <motion.div 
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="md:col-span-1"
-          >
-            <Card className="p-6 md:p-8">
-              <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-600">Custom Song</span>
-                  <span className="font-medium">$199.00</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-600">Rush Delivery</span>
-                  <span className="font-medium">$49.00</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-600">Tax</span>
-                  <span className="font-medium">$24.80</span>
-                </div>
-                <div className="flex justify-between py-2 font-bold text-lg">
-                  <span>Total</span>
-                  <span>$272.80</span>
-                </div>
+          {/* Order Summary - Mobile Optimized */}
+          <Card className="p-4 md:p-6 bg-gray-50">
+            <h3 className="text-lg md:text-xl font-semibold mb-4">Order Summary</h3>
+            <div className="space-y-3 text-sm md:text-base">
+              <div className="flex justify-between">
+                <span>Base Price ({formData?.plan})</span>
+                <span>${PRICING_TIERS.find(tier => tier.name === formData?.plan)?.price.toFixed(2)}</span>
               </div>
-
-              <div className="flex items-center justify-center gap-2 mt-6 text-sm text-gray-600">
-                <Lock className="w-4 h-4" />
-                <span>Secure Payment</span>
+              {formData?.rushDelivery && (
+                <div className="flex justify-between text-rose-600">
+                  <span>Rush Delivery</span>
+                  <span>+${RUSH_DELIVERY_FEE.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-gray-500">
+                <span>Tax</span>
+                <span>${(PRICING_TIERS.find(tier => tier.name === formData?.plan)?.price * TAX_RATE).toFixed(2)}</span>
               </div>
-            </Card>
-          </motion.div>
+              <div className="pt-3 border-t flex justify-between font-semibold">
+                <span>Total</span>
+                <span className="text-rose-600">
+                  ${(
+                    PRICING_TIERS.find(tier => tier.name === formData?.plan)?.price * (1 + TAX_RATE) +
+                    (formData?.rushDelivery ? RUSH_DELIVERY_FEE : 0)
+                  ).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </Card>
         </div>
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="flex justify-start mt-8"
-        >
-          <Button variant="outline" className="flex items-center gap-2" asChild>
-            <Link href="/create-song/review">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Review
-            </Link>
-          </Button>
-        </motion.div>
       </motion.div>
     </div>
   )

@@ -22,19 +22,19 @@ export default function ReviewPage() {
   if (!formData) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white pt-24">
+    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white pt-16">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="container max-w-4xl mx-auto px-4 py-24 md:py-32 relative"
+        className="container max-w-4xl mx-auto px-4 py-12 md:py-16 relative"
       >
         {/* Progress Steps */}
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="mb-16"
+          className="mb-12"
         >
           <div className="flex items-center justify-between max-w-xs mx-auto">
             <div className="flex flex-col items-center">
@@ -75,7 +75,7 @@ export default function ReviewPage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="p-6 md:p-8 mb-8">
+          <Card className="p-6 md:p-8">
             <div className="grid gap-6">
               <div>
                 <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
@@ -144,27 +144,26 @@ export default function ReviewPage() {
                 </div>
               </div>
             </div>
-          </Card>
-        </motion.div>
 
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="flex justify-between items-center"
-        >
-          <Button variant="outline" className="flex items-center gap-2" asChild>
-            <Link href="/create-song">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Details
-            </Link>
-          </Button>
-          <Button className="flex items-center gap-2 bg-gradient-to-r from-rose-600 to-rose-500" asChild>
-            <Link href="/create-song/payment">
-              Proceed to Payment
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </Button>
+            <div className="flex flex-col sm:flex-row gap-4 pt-8 mt-8 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push('/create-song')}
+                className="w-full sm:w-auto order-2 sm:order-1"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Details
+              </Button>
+              <Button 
+                onClick={() => router.push('/create-song/payment')}
+                className="w-full sm:w-auto sm:ml-auto order-1 sm:order-2 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white py-6"
+              >
+                Proceed to Payment
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </Card>
         </motion.div>
       </motion.div>
     </div>
