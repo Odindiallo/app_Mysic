@@ -52,7 +52,7 @@ export default function HeroSection() {
   return (
     <section 
       ref={sectionRef}
-      className="relative w-full min-h-screen overflow-hidden bg-white"
+      className="relative w-full min-h-[100svh] md:min-h-screen overflow-hidden bg-white"
       aria-label="Hero Section"
     >
       {/* Background Elements */}
@@ -62,28 +62,23 @@ export default function HeroSection() {
       <WaveAnimation className="opacity-5 z-30" aria-hidden="true" />
       <MusicAnimations className="z-20" />
       
-      {/* Decorative Circles */}
-      <div className="absolute top-1/4 -left-64 w-96 h-96 bg-rose-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
-      <div className="absolute top-1/3 -right-48 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
-      <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000" />
-      
       {/* Main Content */}
-      <div className="container mx-auto px-4 min-h-screen flex flex-col justify-center relative z-40">
-        <div className="grid lg:grid-cols-2 gap-12 items-center py-12">
+      <div className="container mx-auto px-4 min-h-[100svh] md:min-h-screen flex flex-col justify-center relative z-40">
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-12 items-center py-8 md:py-12">
           {/* Left Column - Text Content */}
-          <div className="flex flex-col text-center lg:text-left">
+          <div className="flex flex-col text-center lg:text-left space-y-4 md:space-y-6">
             <motion.div
               variants={fadeUpVariants}
               initial="hidden"
               animate={isVisible ? "visible" : "hidden"}
               transition={{ duration: 0.6 }}
-              className="mb-6 flex flex-col gap-4"
+              className="flex flex-col gap-3 md:gap-4"
             >
               <span 
-                className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-rose-100 to-purple-100 text-rose-600 text-sm font-medium shadow-sm hover:shadow-md transition-shadow duration-300 w-fit mx-auto lg:mx-0"
+                className="inline-flex items-center px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-gradient-to-r from-rose-100 to-purple-100 text-rose-600 text-sm font-medium shadow-sm hover:shadow-md transition-shadow duration-300 w-fit mx-auto lg:mx-0"
                 role="text"
               >
-                <Star className="w-4 h-4 mr-2 text-yellow-500" aria-hidden="true" />
+                <Star className="w-3 md:w-4 h-3 md:h-4 mr-1.5 md:mr-2 text-yellow-500" aria-hidden="true" />
                 Rated 4.9/5 by our customers
               </span>
               <span 
@@ -177,13 +172,13 @@ export default function HeroSection() {
             </motion.div>
           </div>
 
-          {/* Right Column - Vinyl Animation */}
+          {/* Right Column - Visual Elements - Hidden on mobile */}
           <motion.div
             variants={fadeUpVariants}
             initial="hidden"
             animate={isVisible ? "visible" : "hidden"}
             transition={{ duration: 0.8 }}
-            className="relative flex justify-center items-center"
+            className="relative hidden md:flex justify-center items-center"
             aria-hidden="true"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-purple-500/10 blur-3xl rounded-full" />
@@ -191,49 +186,49 @@ export default function HeroSection() {
               <VinylRecord className="w-full h-full" />
             </div>
           </motion.div>
-        </div>
 
-        {/* Stats Grid */}
-        <motion.div
-          variants={fadeUpVariants}
-          initial="hidden"
-          animate={isVisible ? "visible" : "hidden"}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto w-full mt-12"
-        >
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={index}
-                variants={fadeUpVariants}
-                initial="hidden"
-                animate={isVisible ? "visible" : "hidden"}
-                transition={{ duration: 0.4, delay: 0.1 * index }}
-                className="relative text-center p-6 rounded-2xl bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-300 group hover:scale-105 shadow-lg shadow-gray-100/50 hover:shadow-xl focus-within:ring-2 focus-within:ring-rose-400"
-                tabIndex={0}
-                role="group"
-                aria-label={`${stat.label}: ${stat.value}${stat.suffix || ''}`}
-              >
-                <div 
-                  className="inline-flex items-center justify-center w-12 h-12 mb-4 rounded-xl bg-gradient-to-br from-rose-100 to-rose-200 text-rose-600 group-hover:scale-110 transition-transform duration-300"
-                  aria-hidden="true"
+          {/* Stats Grid - Keeping original desktop layout */}
+          <motion.div
+            variants={fadeUpVariants}
+            initial="hidden"
+            animate={isVisible ? "visible" : "hidden"}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto w-full mt-12"
+          >
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={index}
+                  variants={fadeUpVariants}
+                  initial="hidden"
+                  animate={isVisible ? "visible" : "hidden"}
+                  transition={{ duration: 0.4, delay: 0.1 * index }}
+                  className="relative text-center p-6 rounded-2xl bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-300 group hover:scale-105 shadow-lg shadow-gray-100/50 hover:shadow-xl focus-within:ring-2 focus-within:ring-rose-400"
+                  tabIndex={0}
+                  role="group"
+                  aria-label={`${stat.label}: ${stat.value}${stat.suffix || ''}`}
                 >
-                  <Icon className="w-6 h-6" />
-                </div>
-                <div className="flex items-center justify-center space-x-1">
-                  <StatsCounter
-                    end={stat.value}
-                    suffix={stat.suffix}
-                    className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-800 to-gray-600"
-                  />
-                </div>
-                <p className="text-sm font-medium text-gray-600 mt-2">{stat.label}</p>
-                <span className="sr-only">{stat.description}</span>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                  <div 
+                    className="inline-flex items-center justify-center w-12 h-12 mb-4 rounded-xl bg-gradient-to-br from-rose-100 to-rose-200 text-rose-600 group-hover:scale-110 transition-transform duration-300"
+                    aria-hidden="true"
+                  >
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <div className="flex items-center justify-center space-x-1">
+                    <StatsCounter
+                      end={stat.value}
+                      suffix={stat.suffix}
+                      className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-800 to-gray-600"
+                    />
+                  </div>
+                  <p className="text-sm font-medium text-gray-600 mt-2">{stat.label}</p>
+                  <span className="sr-only">{stat.description}</span>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
       </div>
     </section>
   )
