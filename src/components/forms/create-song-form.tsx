@@ -6,9 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, ChevronLeft, ChevronRight, Music2, ChevronDown, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { UserService } from '@/services/user-service';
+import { PlanService } from '@/services/plan-service';
 
 // Rules Applied:
 // - Functional Programming: Using functional components and hooks
@@ -64,7 +68,7 @@ const FORM_FIELDS: FormField[] = [
     step: 1,
   },
   {
-    id: 'recipient',
+    id: 'recipientName',
     label: 'Who is this song for?',
     type: 'text',
     placeholder: 'Enter recipient name',
@@ -102,6 +106,7 @@ const FORM_FIELDS: FormField[] = [
     label: 'Additional information (optional)',
     type: 'textarea',
     placeholder: 'Any other details you\'d like us to know...',
+    required: false,
     step: 3,
   },
 ];
@@ -114,177 +119,237 @@ const STEPS = [
 
 export function CreateSongForm(): JSX.Element {
   const router = useRouter();
-  const { 
-    formData, 
-    setFormData, 
-    currentStep, 
-    setCurrentStep, 
-    validateStep 
-  } = useSongStore();
+  const { toast } = useToast();
+  const { formData, setFormData, currentStep, setCurrentStep } = useSongStore();
+  const [customStyle, setCustomStyle] = useState('');
+  const [customTempo, setCustomTempo] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [showCustomInput, setShowCustomInput] = useState<{
-    styles: boolean;
-    tempos: boolean;
-  }>({
-    styles: false,
-    tempos: false
-  });
+  // Sync form step with URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const step = parseInt(params.get('step') || '1');
+    const planId = params.get('plan_id');
+    
+    if (step >= 1 && step <= 3) {
+      setCurrentStep(step);
+    }
+
+    // If we have a plan ID but no form data, verify the plan
+    if (planId && !formData?.plan) {
+      verifyPlan(planId);
+    }
+  }, [setCurrentStep, formData?.plan]);
+
+  // Verify plan selection
+  async function verifyPlan(planId: string): Promise<void> {
+    try {
+      const plan = await PlanService.verifyPlanSelection(planId);
+      if (plan) {
+        setFormData({
+          plan: plan.name,
+          planType: plan.planType,
+          price: plan.price,
+          songsIncluded: plan.songsIncluded,
+          pricePerSong: plan.pricePerSong
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Invalid plan selection. Please try again.",
+          variant: "destructive",
+        });
+        router.push('/');
+      }
+    } catch (error) {
+      console.error('Error verifying plan:', error);
+      toast({
+        title: "Error",
+        description: "Failed to verify plan. Please try again.",
+        variant: "destructive",
+      });
+      router.push('/');
+    }
+  }
 
   function handleInputChange(field: string, value: string | string[]): void {
     setFormData({ [field]: value });
   }
 
-  function handleCustomAdd(field: 'styles' | 'tempos', customField: 'customStyle' | 'customTempo'): void {
-    const customValue = formData[customField];
-    if (customValue?.trim()) {
-      const currentValues = formData[field] || [];
-      setFormData({
-        [field]: [...currentValues, customValue.trim()],
-        [customField]: '',
-      });
-      // Hide the custom input after adding
-      setShowCustomInput(prev => ({
-        ...prev,
-        [field]: false
-      }));
+  function handleCustomAdd(field: 'styles' | 'tempos', value: string): void {
+    if (!value.trim()) return;
+
+    const currentValues = formData?.[field] || [];
+    if (!currentValues.includes(value)) {
+      setFormData({ [field]: [...currentValues, value.trim()] });
+    }
+
+    if (field === 'styles') {
+      setCustomStyle('');
+    } else {
+      setCustomTempo('');
     }
   }
 
-  function handleRemoveItem(field: 'styles' | 'tempos', item: string): void {
-    const currentValues = formData[field] || [];
+  function handleCustomRemove(field: 'styles' | 'tempos', item: string): void {
+    const currentValues = formData?.[field] || [];
     setFormData({
-      [field]: currentValues.filter(value => value !== item),
+      [field]: currentValues.filter(value => value !== item)
     });
   }
 
   function handleKeyPress(
     event: React.KeyboardEvent<HTMLInputElement>,
     field: 'styles' | 'tempos',
-    customField: 'customStyle' | 'customTempo',
     value: string
   ): void {
     if (event.key === 'Enter') {
       event.preventDefault();
-      handleCustomAdd(field, customField);
+      handleCustomAdd(field, value);
     }
   }
 
-  function handleNext(): void {
-    if (validateStep(currentStep)) {
-      setCurrentStep(currentStep + 1);
+  async function handleNext(): Promise<void> {
+    const { validateStep } = useSongStore.getState();
+    
+    if (!validateStep(currentStep)) {
+      toast({
+        title: "Required Fields",
+        description: "Please fill in all required fields before continuing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (currentStep === 3) {
+      setIsSubmitting(true);
+      try {
+        if (!formData.email || !formData.name) {
+          throw new Error('Email and name are required');
+        }
+
+        // Save user data first
+        const user = await UserService.findOrCreateUser({
+          email: formData.email,
+          name: formData.name,
+          marketingConsent: formData.marketingConsent || false
+        });
+
+        if (!user || !user.id) {
+          throw new Error('Failed to create or find user');
+        }
+
+        // Update form data with user ID while preserving existing data
+        setFormData({
+          ...formData,
+          userId: user.id,
+          userEmail: user.email
+        });
+
+        router.push('/create-song/review');
+      } catch (error) {
+        console.error('Error saving user data:', error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to save your information. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+      
+      // Preserve plan_id in URL
+      const params = new URLSearchParams(window.location.search);
+      const planId = params.get('plan_id');
+      router.push(`/create-song?step=${nextStep}${planId ? `&plan_id=${planId}` : ''}`);
     }
   }
 
   function handleBack(): void {
-    setCurrentStep(currentStep - 1);
+    const prevStep = currentStep - 1;
+    setCurrentStep(prevStep);
+    
+    // Preserve plan_id in URL
+    const params = new URLSearchParams(window.location.search);
+    const planId = params.get('plan_id');
+    router.push(`/create-song?step=${prevStep}${planId ? `&plan_id=${planId}` : ''}`);
   }
 
   function handleSubmit(event: React.FormEvent): void {
     event.preventDefault();
-    
-    if (validateStep(currentStep)) {
-      router.push('/create-song/review');
-    }
+    handleNext();
   }
 
-  function renderField(field: FormField): JSX.Element {
-    const value = formData[field.id as keyof typeof formData] || '';
+  const isFormEnabled = !!formData?.plan;
 
-    switch (field.type) {
-      case 'text':
-        return (
-          <Input
-            id={field.id}
-            value={value as string}
-            onChange={(e) => handleInputChange(field.id, e.target.value)}
-            placeholder={field.placeholder}
-            className="w-full min-h-[48px] text-base"
-          />
-        );
-      case 'textarea':
-        return (
-          <Textarea
-            id={field.id}
-            value={value as string}
-            onChange={(e) => handleInputChange(field.id, e.target.value)}
-            placeholder={field.placeholder}
-            className="w-full min-h-[120px] text-base resize-none"
-          />
-        );
-      case 'select':
-        return (
-          <select
-            id={field.id}
-            value={value as string}
-            onChange={(e) => handleInputChange(field.id, e.target.value)}
-            className="w-full min-h-[48px] px-3 py-2 text-base rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-          >
-            <option value="">{field.placeholder}</option>
-            {field.options?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        );
-      case 'multiselect':
-        const selectedValues = (formData[field.id as 'styles' | 'tempos'] || []) as string[];
-        
-        return (
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {selectedValues.map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-rose-50 text-rose-700 rounded-full text-sm"
-                >
-                  {item}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveItem(field.id as 'styles' | 'tempos', item)}
-                    className="p-1 hover:bg-rose-100 rounded-full"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    handleInputChange(
-                      field.id,
-                      [...selectedValues, e.target.value]
-                    );
-                    e.target.value = '';
-                  }
-                }}
-                className="w-full sm:flex-1 min-h-[48px] px-3 py-2 text-base rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-              >
-                <option value="">{field.placeholder}</option>
-                {field.options
-                  ?.filter((option) => !selectedValues.includes(option))
-                  .map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          </div>
-        );
-      default:
-        return <div>Unsupported field type</div>;
-    }
+  if (!isFormEnabled) {
+    return <div>Loading...</div>;
   }
+
+  // Add user information fields to step 2
+  const userFields = (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="email">Email Address *</Label>
+        <Input
+          id="email"
+          type="email"
+          value={formData?.email || ''}
+          onChange={(e) => handleInputChange('email', e.target.value)}
+          placeholder="Enter your email address"
+          required
+        />
+      </div>
+      <div>
+        <Label htmlFor="name">Full Name *</Label>
+        <Input
+          id="name"
+          type="text"
+          value={formData?.name || ''}
+          onChange={(e) => handleInputChange('name', e.target.value)}
+          placeholder="Enter your full name"
+          required
+        />
+      </div>
+      <div className="flex items-start space-x-2">
+        <Checkbox
+          id="marketingConsent"
+          checked={formData?.marketingConsent || false}
+          onCheckedChange={(checked) => {
+            handleInputChange('marketingConsent', checked === true);
+          }}
+          className="mt-1"
+        />
+        <Label 
+          htmlFor="marketingConsent" 
+          className="text-sm text-gray-600 leading-relaxed"
+        >
+          I agree to receive updates about my song and other promotional materials
+        </Label>
+      </div>
+    </div>
+  );
 
   return (
-    <form 
-      onSubmit={handleSubmit}
-      className="w-full max-w-screen-md mx-auto space-y-6 px-4 md:px-6 py-4 md:py-6"
-    >
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Plan Details */}
+      <div className="bg-rose-50 rounded-lg p-4 mb-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="font-semibold text-rose-900">{formData.plan}</h3>
+            <p className="text-sm text-rose-700">{formData.songsIncluded} songs included</p>
+          </div>
+          <div className="text-right">
+            <p className="font-semibold text-rose-900">${formData.price}</p>
+            <p className="text-sm text-rose-700">${formData.pricePerSong} per song</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Steps */}
       <div className="space-y-8">
         <AnimatePresence mode="wait">
           <motion.div
@@ -303,9 +368,10 @@ export function CreateSongForm(): JSX.Element {
                   {field.label}
                   {field.required && <span className="text-red-500 ml-1">*</span>}
                 </Label>
-                {renderField(field)}
+                {renderField(field, formData, handleInputChange, handleCustomAdd, handleCustomRemove)}
               </div>
             ))}
+            {currentStep === 2 && userFields}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -322,9 +388,9 @@ export function CreateSongForm(): JSX.Element {
             Back
           </Button>
         )}
+
         <Button
-          type={currentStep === 3 ? 'submit' : 'button'}
-          onClick={currentStep < 3 ? handleNext : undefined}
+          type="submit"
           className="w-full md:w-auto min-h-[48px] text-base"
         >
           {currentStep === 3 ? 'Review' : 'Next'}
@@ -333,4 +399,103 @@ export function CreateSongForm(): JSX.Element {
       </div>
     </form>
   );
+}
+
+function renderField(
+  field: FormField,
+  formData: any,
+  handleInputChange: (field: string, value: any) => void,
+  handleCustomAdd: (field: 'styles' | 'tempos', value: string) => void,
+  handleCustomRemove: (field: 'styles' | 'tempos', item: string) => void
+): JSX.Element {
+  const value = formData?.[field.id] || '';
+
+  switch (field.type) {
+    case 'text':
+      return (
+        <Input
+          id={field.id}
+          value={value as string}
+          onChange={(e) => handleInputChange(field.id, e.target.value)}
+          placeholder={field.placeholder}
+          className="w-full min-h-[48px] text-base"
+        />
+      );
+    case 'textarea':
+      return (
+        <Textarea
+          id={field.id}
+          value={value as string}
+          onChange={(e) => handleInputChange(field.id, e.target.value)}
+          placeholder={field.placeholder}
+          className="w-full min-h-[120px] text-base resize-none"
+        />
+      );
+    case 'select':
+      return (
+        <select
+          id={field.id}
+          value={value as string}
+          onChange={(e) => handleInputChange(field.id, e.target.value)}
+          className="w-full min-h-[48px] px-3 py-2 text-base rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+        >
+          <option value="">{field.placeholder}</option>
+          {field.options?.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      );
+    case 'multiselect':
+      const selectedValues = (formData[field.id as 'styles' | 'tempos'] || []) as string[];
+      
+      return (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {selectedValues.map((item) => (
+              <div
+                key={item}
+                className="flex items-center gap-1 px-3 py-1.5 bg-rose-50 text-rose-700 rounded-full text-sm"
+              >
+                {item}
+                <button
+                  type="button"
+                  onClick={() => handleCustomRemove(field.id as 'styles' | 'tempos', item)}
+                  className="p-1 hover:bg-rose-100 rounded-full"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              onChange={(e) => {
+                if (e.target.value) {
+                  handleInputChange(
+                    field.id,
+                    [...selectedValues, e.target.value]
+                  );
+                  e.target.value = '';
+                }
+              }}
+              className="w-full sm:flex-1 min-h-[48px] px-3 py-2 text-base rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            >
+              <option value="">{field.placeholder}</option>
+              {field.options
+                ?.filter((option) => !selectedValues.includes(option))
+                .map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+            </select>
+          </div>
+        </div>
+      );
+    default:
+      return <div>Unsupported field type</div>;
+  }
 }

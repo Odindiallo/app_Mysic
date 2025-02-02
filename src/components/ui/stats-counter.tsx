@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface StatsCounterProps {
-  end: number;
+  value: number;
   suffix?: string;
   prefix?: string;
   className?: string;
@@ -14,7 +14,7 @@ interface StatsCounterProps {
 }
 
 export function StatsCounter({ 
-  end, 
+  value, 
   suffix = "", 
   prefix = "", 
   className,
@@ -35,10 +35,10 @@ export function StatsCounter({
       const progress = (timestamp - startTime) / duration;
 
       if (progress < 1) {
-        setCount(Math.floor(end * progress));
+        setCount(Math.floor(value * progress));
         animationFrameId = requestAnimationFrame(updateCount);
       } else {
-        setCount(end);
+        setCount(value);
       }
     };
 
@@ -49,11 +49,13 @@ export function StatsCounter({
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [end, duration, isInView]);
+  }, [value, duration, isInView]);
 
   return (
-    <span ref={counterRef} className={cn("tabular-nums", className)}>
-      {prefix}{count}{suffix}
+    <span ref={counterRef} className={cn("tabular-nums inline-flex items-baseline", className)}>
+      {prefix}
+      <span>{count}</span>
+      {suffix && <span className="ml-0.5">{suffix}</span>}
     </span>
   );
 }

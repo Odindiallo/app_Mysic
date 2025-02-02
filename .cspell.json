@@ -1,0 +1,30 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "supabase",
+    "Supabase",
+    "plpgsql",
+    "XVCJ",
+    "corl",
+    "byctyyvka",
+    "yzvf",
+    "Cmzrf",
+    "Keqhok",
+    "Dfhvh",
+    "Hhvh",
+    "musique",
+    "Musique",
+    "sonner",
+    "postgrest",
+    "Postgrest",
+    "ilike"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    ".git/**",
+    "dist/**",
+    "build/**",
+    "coverage/**"
+  ]
+}

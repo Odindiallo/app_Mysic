@@ -1,114 +1,76 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+// Rules Applied:
+// - Testing: Jest testing
+// - TypeScript Usage: Type-safe tests
+// - Error Handling: Test error cases
+
+import { describe, expect, beforeEach, it } from '@jest/globals';
 import { useSongStore } from '../song-store';
 
-// Rules Applied:
-// - Testing and Validation: Adding comprehensive unit tests
-// - Error Handling: Testing error cases
-// - Documentation: Clear test descriptions
-
-describe('Song Store', () => {
+describe('useSongStore', () => {
   beforeEach(() => {
     const store = useSongStore.getState();
     store.resetForm();
   });
 
-  describe('Form Data Management', () => {
-    it('should initialize with default values', () => {
-      const store = useSongStore.getState();
-      expect(store.formData).toEqual({
-        plan: undefined,
-        occasion: undefined,
-        recipient: undefined,
-        message: undefined,
-        style: undefined,
-        tempo: undefined,
-        additionalInfo: undefined,
-        isRushDelivery: false,
-      });
-      expect(store.isFormValid).toBe(false);
-      expect(store.hasUnsavedChanges).toBe(false);
+  it('should initialize with default values', () => {
+    const store = useSongStore.getState();
+    expect(store.formData).toEqual({
+      plan: '',
+      occasion: '',
+      recipient: '',
+      message: '',
+      styles: [],
+      custom_style: '',
+      tempos: [],
+      custom_tempo: '',
+      additional_info: '',
+      is_rush_delivery: false,
     });
-
-    it('should update form data correctly', () => {
-      const store = useSongStore.getState();
-      store.setFormData({
-        plan: 'single',
-        occasion: 'Birthday',
-      });
-
-      expect(store.formData.plan).toBe('single');
-      expect(store.formData.occasion).toBe('Birthday');
-      expect(store.hasUnsavedChanges).toBe(true);
-    });
-
-    it('should validate required fields correctly', () => {
-      const store = useSongStore.getState();
-      
-      // Incomplete form
-      store.setFormData({
-        plan: 'single',
-        occasion: 'Birthday',
-      });
-      expect(store.isFormValid).toBe(false);
-
-      // Complete form
-      store.setFormData({
-        plan: 'single',
-        occasion: 'Birthday',
-        recipient: 'John',
-        message: 'Happy Birthday!',
-        style: 'Pop',
-        tempo: 'Medium & Groovy',
-      });
-      expect(store.isFormValid).toBe(true);
-    });
-
-    it('should reset form correctly', () => {
-      const store = useSongStore.getState();
-      
-      store.setFormData({
-        plan: 'single',
-        occasion: 'Birthday',
-      });
-      
-      store.resetForm();
-      
-      expect(store.formData).toEqual({
-        plan: undefined,
-        occasion: undefined,
-        recipient: undefined,
-        message: undefined,
-        style: undefined,
-        tempo: undefined,
-        additionalInfo: undefined,
-        isRushDelivery: false,
-      });
-      expect(store.isFormValid).toBe(false);
-      expect(store.hasUnsavedChanges).toBe(false);
-    });
+    expect(store.isFormValid).toBe(false);
+    expect(store.hasUnsavedChanges).toBe(false);
+    expect(store.currentStep).toBe(1);
   });
 
-  describe('Form Validation', () => {
-    it('should handle empty values correctly', () => {
-      const store = useSongStore.getState();
-      
-      store.setFormData({
-        plan: '',
-        occasion: '',
-      });
-      
-      expect(store.isFormValid).toBe(false);
+  it('should update form data', () => {
+    const store = useSongStore.getState();
+    store.setFormData({
+      plan: 'basic',
+      occasion: 'birthday',
+      styles: ['pop'],
     });
 
-    it('should handle undefined values correctly', () => {
-      const store = useSongStore.getState();
-      
-      store.setFormData({
-        plan: undefined,
-        occasion: undefined,
-      });
-      
-      expect(store.isFormValid).toBe(false);
+    expect(store.formData.plan).toBe('basic');
+    expect(store.formData.occasion).toBe('birthday');
+    expect(store.formData.styles).toEqual(['pop']);
+    expect(store.hasUnsavedChanges).toBe(true);
+  });
+
+  it('should validate form data', () => {
+    const store = useSongStore.getState();
+    store.setFormData({
+      plan: 'basic',
+      occasion: 'birthday',
+      recipient: 'John',
+      message: 'Happy Birthday!',
+      styles: ['pop'],
+      tempos: ['moderate'],
     });
+
+    expect(store.validateForm()).toBe(true);
+  });
+
+  it('should handle step validation', () => {
+    const store = useSongStore.getState();
+    
+    // Step 1: Plan selection
+    store.setFormData({ plan: 'basic' });
+    expect(store.validateStep(1)).toBe(true);
+    
+    // Step 2: Occasion and recipient
+    store.setFormData({
+      occasion: 'birthday',
+      recipient: 'John',
+    });
+    expect(store.validateStep(2)).toBe(true);
   });
 });

@@ -1,22 +1,24 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, jest } from '@jest/globals';
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { useRouter } from 'next/navigation';
 import { PricingModal } from '../pricing-modal';
 import { useSongStore } from '@/store/song-store';
 
 // Rules Applied:
-// - Testing and Validation: Adding comprehensive component tests
-// - Error Handling: Testing user interactions
-// - Documentation: Clear test descriptions
+// - Testing: Jest testing
+// - TypeScript Usage: Type-safe mocks
+// - Error Handling: Test error cases
 
 // Mock next/navigation
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+  })),
 }));
 
 describe('PricingModal', () => {
-  const mockOnClose = vi.fn();
+  const mockOnClose = jest.fn();
 
   beforeEach(() => {
     mockOnClose.mockClear();
@@ -24,69 +26,67 @@ describe('PricingModal', () => {
     store.resetForm();
   });
 
-  describe('Rendering', () => {
-    it('should render all pricing tiers', () => {
-      render(<PricingModal isOpen={true} onClose={mockOnClose} />);
-      
-      expect(screen.getByText('Single Song')).toBeInTheDocument();
-      expect(screen.getByText('Triple Bundle')).toBeInTheDocument();
-      expect(screen.getByText('Studio Pack')).toBeInTheDocument();
-    });
-
-    it('should show correct pricing information', () => {
-      render(<PricingModal isOpen={true} onClose={mockOnClose} />);
-      
-      expect(screen.getByText('$39.99')).toBeInTheDocument();
-      expect(screen.getByText('$99.99')).toBeInTheDocument();
-      expect(screen.getByText('$149.99')).toBeInTheDocument();
-    });
-
-    it('should highlight the most popular plan', () => {
-      render(<PricingModal isOpen={true} onClose={mockOnClose} />);
-      
-      expect(screen.getByText('Most Popular')).toBeInTheDocument();
-    });
+  it('renders pricing options', () => {
+    render(<PricingModal isOpen={true} onClose={mockOnClose} />);
+    
+    expect(screen.getByText(/Single Song/i)).toBeInTheDocument();
+    expect(screen.getByText(/Triple Bundle/i)).toBeInTheDocument();
+    expect(screen.getByText(/Studio Pack/i)).toBeInTheDocument();
   });
 
-  describe('Interactions', () => {
-    it('should call onClose when dialog is closed', () => {
-      render(<PricingModal isOpen={true} onClose={mockOnClose} />);
-      
-      const closeButton = screen.getByRole('button', { name: /close/i });
-      fireEvent.click(closeButton);
-      
-      expect(mockOnClose).toHaveBeenCalled();
-    });
-
-    it('should update form data and redirect when plan is selected', () => {
-      const router = useRouter();
-      render(<PricingModal isOpen={true} onClose={mockOnClose} />);
-      
-      const singlePlanButton = screen.getByRole('button', { name: /get started/i });
-      fireEvent.click(singlePlanButton);
-      
-      const store = useSongStore.getState();
-      expect(store.formData.plan).toBe('single');
-      expect(router.push).toHaveBeenCalledWith('/create-song?plan=single');
-      expect(mockOnClose).toHaveBeenCalled();
-    });
+  it('calls onClose when close button is clicked', () => {
+    render(<PricingModal isOpen={true} onClose={mockOnClose} />);
+    
+    const closeButton = screen.getByRole('button', { name: /close/i });
+    fireEvent.click(closeButton);
+    
+    expect(mockOnClose).toHaveBeenCalled();
   });
 
-  describe('Accessibility', () => {
-    it('should have proper ARIA attributes', () => {
-      render(<PricingModal isOpen={true} onClose={mockOnClose} />);
-      
-      expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
-    });
+  it('navigates to form with selected plan', () => {
+    const mockRouter = {
+      push: jest.fn(),
+    };
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
 
-    it('should be keyboard navigable', () => {
-      render(<PricingModal isOpen={true} onClose={mockOnClose} />);
-      
-      const closeButton = screen.getByRole('button', { name: /close/i });
-      closeButton.focus();
-      fireEvent.keyDown(closeButton, { key: 'Enter' });
-      
-      expect(mockOnClose).toHaveBeenCalled();
-    });
+    render(<PricingModal isOpen={true} onClose={mockOnClose} />);
+    
+    const singlePlanButton = screen.getByRole('button', { name: /get started/i });
+    fireEvent.click(singlePlanButton);
+    
+    const store = useSongStore.getState();
+    expect(store.formData.plan).toBe('single');
+    expect(mockRouter.push).toHaveBeenCalledWith('/create-song?plan=single');
+    expect(mockOnClose).toHaveBeenCalled();
+  });
+
+  it('should show correct pricing information', () => {
+    render(<PricingModal isOpen={true} onClose={mockOnClose} />);
+    
+    expect(screen.getByText('$39.99')).toBeInTheDocument();
+    expect(screen.getByText('$99.99')).toBeInTheDocument();
+    expect(screen.getByText('$149.99')).toBeInTheDocument();
+  });
+
+  it('should highlight the most popular plan', () => {
+    render(<PricingModal isOpen={true} onClose={mockOnClose} />);
+    
+    expect(screen.getByText('Most Popular')).toBeInTheDocument();
+  });
+
+  it('should have proper ARIA attributes', () => {
+    render(<PricingModal isOpen={true} onClose={mockOnClose} />);
+    
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
+  });
+
+  it('should be keyboard navigable', () => {
+    render(<PricingModal isOpen={true} onClose={mockOnClose} />);
+    
+    const closeButton = screen.getByRole('button', { name: /close/i });
+    closeButton.focus();
+    fireEvent.keyDown(closeButton, { key: 'Enter' });
+    
+    expect(mockOnClose).toHaveBeenCalled();
   });
 });

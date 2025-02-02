@@ -2,12 +2,39 @@
 
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { useEffect, useState } from 'react';
 
 interface AnimatedBackgroundProps {
   className?: string
 }
 
 export function AnimatedBackground({ className }: AnimatedBackgroundProps) {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    // Set initial dimensions
+    setDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+
+    // Update dimensions on window resize
+    const handleResize = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const generateRandomPosition = () => ({
+    x: Math.random() * (dimensions.width || 1000), // Fallback width
+    y: Math.random() * (dimensions.height || 800), // Fallback height
+  });
+
   return (
     <div className={cn("absolute inset-0 overflow-hidden", className)}>
       {/* Animated gradient orbs */}
@@ -86,14 +113,14 @@ export function AnimatedBackground({ className }: AnimatedBackgroundProps) {
             initial={{
               opacity: 0,
               scale: 0,
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
+              x: generateRandomPosition().x,
+              y: generateRandomPosition().y,
             }}
             animate={{
               opacity: [0, 1, 0],
               scale: [0, 1, 0],
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
+              x: generateRandomPosition().x,
+              y: generateRandomPosition().y,
             }}
             transition={{
               duration: Math.random() * 5 + 5,

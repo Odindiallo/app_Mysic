@@ -1,137 +1,84 @@
+'use client';
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Type definitions
 interface SongFormData {
+  // Plan Information
   plan?: string;
+  planId?: string;
+  planType?: string;
+  price?: number;
+  songsIncluded?: number;
+  pricePerSong?: number;
+
+  // User Information
+  userId?: string;
+  userEmail?: string;
+  email?: string;
+  name?: string;
+  marketingConsent?: boolean;
+
+  // Song Details
   occasion?: string;
-  recipient?: string;
+  recipientName?: string;
   message?: string;
   styles?: string[];
-  customStyle?: string;
   tempos?: string[];
-  customTempo?: string;
   additionalInfo?: string;
-  isRushDelivery?: boolean;
 }
 
-interface SongState {
+interface SongStore {
   formData: SongFormData;
-  isFormValid: boolean;
-  hasUnsavedChanges: boolean;
-  paymentStatus?: 'pending' | 'completed' | 'failed';
   currentStep: number;
-  setFormData: (data: Partial<SongFormData>) => void;
-  resetForm: () => void;
-  validateForm: () => boolean;
-  setHasUnsavedChanges: (value: boolean) => void;
-  setPaymentStatus: (status: 'pending' | 'completed' | 'failed') => void;
+  songId?: string;
   setCurrentStep: (step: number) => void;
-  validateStep: (step: number) => boolean;
+  setFormData: (data: Partial<SongFormData>) => void;
+  setSongId: (id: string) => void;
   clearFormData: () => void;
+  validateStep: (step: number) => boolean;
 }
 
-const INITIAL_FORM_DATA: SongFormData = {
-  plan: undefined,
-  occasion: undefined,
-  recipient: undefined,
-  message: undefined,
-  styles: [],
-  customStyle: undefined,
-  tempos: [],
-  customTempo: undefined,
-  additionalInfo: undefined,
-  isRushDelivery: false,
-};
-
-export const useSongStore = create<SongState>()(
+// Store implementation
+export const useSongStore = create<SongStore>()(
   persist(
     (set, get) => ({
-      formData: INITIAL_FORM_DATA,
-      isFormValid: false,
-      hasUnsavedChanges: false,
-      paymentStatus: undefined,
+      formData: {},
       currentStep: 1,
-
-      setFormData: (data) => {
+      songId: undefined,
+      
+      setCurrentStep: (step: number) => set({ currentStep: step }),
+      
+      setFormData: (data: Partial<SongFormData>) =>
         set((state) => ({
           formData: { ...state.formData, ...data },
-          hasUnsavedChanges: true,
-        }));
-        get().validateForm();
-      },
+        })),
 
-      resetForm: () => {
-        set({
-          formData: INITIAL_FORM_DATA,
-          isFormValid: false,
-          hasUnsavedChanges: false,
-          currentStep: 1,
-        });
-      },
+      setSongId: (id: string) => set({ songId: id }),
+      
+      clearFormData: () => set({ formData: {}, currentStep: 1, songId: undefined }),
 
-      validateForm: () => {
+      validateStep: (step: number) => {
         const { formData } = get();
-
-        // Define required fields with their validation rules
-        const validationRules = {
-          occasion: (value?: string) => !!value,
-          recipient: (value?: string) => !!value,
-          message: (value?: string) => !!value,
-          styles: (value?: string[]) => (value?.length || 0) > 0,
-          tempos: (value?: string[]) => (value?.length || 0) > 0,
-        };
-
-        // Validate all required fields
-        const isValid = Object.entries(validationRules).every(
-          ([field, validate]) => validate(formData[field as keyof typeof validationRules])
-        );
-
-        set({ isFormValid: isValid });
-        return isValid;
-      },
-
-      setHasUnsavedChanges: (value) => {
-        set({ hasUnsavedChanges: value });
-      },
-      setPaymentStatus: (status) => {
-        set({ paymentStatus: status });
-      },
-
-      setCurrentStep: (step) => {
-        set({ currentStep: step });
-      },
-
-      validateStep: (step) => {
-        const { formData } = get();
-        
-        // Helper function to safely check array length
-        const hasArrayValues = (arr?: string[]) => (arr?.length || 0) > 0;
-        
         switch (step) {
-          case 1: // Basic Info
-            return !!formData.occasion && !!formData.recipient;
-          case 2: // Message
-            return !!formData.message;
-          case 3: // Music Preferences
-            return hasArrayValues(formData.styles) && hasArrayValues(formData.tempos);
+          case 1: // Plan Selection
+            return !!formData.plan && !!formData.price;
+          case 2: // Song Details
+            return !!formData.occasion && !!formData.message;
+          case 3: // User Information
+            return !!formData.email && !!formData.name;
           default:
             return true;
         }
       },
-      clearFormData: () => {
-        set({
-          formData: INITIAL_FORM_DATA,
-          isFormValid: false,
-          hasUnsavedChanges: false,
-          paymentStatus: undefined,
-          currentStep: 1,
-        });
-      },
     }),
     {
-      name: 'song-store',
+      name: 'song-form-storage',
       partialize: (state) => ({
         formData: state.formData,
+        currentStep: state.currentStep,
+        songId: state.songId,
       }),
     }
   )

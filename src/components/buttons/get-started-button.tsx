@@ -1,6 +1,6 @@
 'use client';
 
-import { useModalStore } from "@/store/modal-store";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ButtonHTMLAttributes } from "react";
 
@@ -12,32 +12,28 @@ import { ButtonHTMLAttributes } from "react";
 
 interface GetStartedButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'gradient';
-  size?: 'default' | 'lg';
+  className?: string;
+  children?: React.ReactNode;
 }
 
 export function GetStartedButton({ 
   className, 
   variant = 'default',
-  size = 'default',
+  children = "Get Started",
   ...props 
 }: GetStartedButtonProps): JSX.Element {
-  const { openPricing } = useModalStore();
-
   return (
-    <button
-      onClick={openPricing}
+    <Button
       className={cn(
-        "font-medium transition-all duration-300 transform hover:scale-[1.02]",
-        size === 'lg' ? "py-3 px-6 text-base" : "py-2.5 px-4 text-sm",
-        variant === 'gradient'
-          ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:from-rose-600 hover:to-rose-700 hover:shadow-lg hover:shadow-rose-100/50"
-          : "bg-gray-900 text-white hover:bg-rose-600 hover:shadow-lg",
-        "rounded-lg",
+        "font-medium transition-all duration-300",
+        variant === 'gradient' && "bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white shadow-lg shadow-rose-200/50",
+        variant === 'default' && "bg-white text-gray-900 hover:bg-rose-50 hover:text-rose-600 border border-gray-200 hover:border-rose-200",
+        "disabled:opacity-50 disabled:cursor-not-allowed",
         className
       )}
       {...props}
     >
-      {props.children || "Get Started"}
-    </button>
+      {children}
+    </Button>
   );
 }

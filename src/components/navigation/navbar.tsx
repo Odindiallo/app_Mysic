@@ -21,6 +21,10 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleMobileMenuClick = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <header
       className={cn(
@@ -32,7 +36,7 @@ export function Navbar() {
     >
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="font-bold text-2xl font-poppins">
+        <Link href="/" className="font-bold text-2xl font-poppins" onClick={handleMobileMenuClick}>
           <span className="bg-gradient-to-r from-rose-600 to-rose-400 bg-clip-text text-transparent">
             Musique
           </span>
@@ -59,7 +63,8 @@ export function Navbar() {
         {/* Mobile Menu Button */}
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+          className="md:hidden p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-rose-500"
+          aria-label="Toggle menu"
         >
           <svg
             className="w-6 h-6"
@@ -92,22 +97,22 @@ export function Navbar() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-16 left-0 right-0 bg-white shadow-lg md:hidden"
+              className="absolute top-16 left-0 right-0 bg-white shadow-lg md:hidden border-t border-gray-100"
             >
-              <div className="py-4 px-4 space-y-3">
+              <div className="py-4 px-6 space-y-4">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={handleMobileMenuClick}
                     className="block py-2 text-gray-600 hover:text-rose-500 transition-colors font-medium"
-                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {item.title}
                   </Link>
                 ))}
                 <Link 
-                  href="/create-song"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  href="/create-song" 
+                  onClick={handleMobileMenuClick}
                   className="block"
                 >
                   <Button className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600 transition-all duration-200">

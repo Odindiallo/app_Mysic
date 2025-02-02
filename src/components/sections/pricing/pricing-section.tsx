@@ -2,21 +2,57 @@
 
 import { motion } from "framer-motion";
 import { Check, Music, Clock, Star, Download, Sparkles } from "lucide-react";
+import { PlanService, validatePlanSelection } from "@/services/plan-service";
+import { toast } from "@/components/ui/use-toast";
 import { PRICING_TIERS } from "@/constants/pricing";
 import Link from "next/link";
 import { useSongStore } from "@/store/song-store";
 import { useRouter } from "next/navigation";
 import { GetStartedButton } from "@/components/buttons/get-started-button";
+import { useState } from "react";
 
 const tiers = PRICING_TIERS;
 
 export default function PricingSection() {
   const { setFormData } = useSongStore();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  const handlePlanSelect = (planType: string) => {
-    setFormData({ plan: planType } as any);
-    router.push(`/create-song?plan=${planType}`);
+  const handlePlanSelect = async (planType: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const result = await PlanService.savePlanSelection(planType);
+      
+      if (!result) {
+        toast({
+          title: "Error",
+          description: "Failed to save plan selection",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const validation = validatePlanSelection(planType);
+      if (validation.plan) {
+        setFormData({ 
+          plan: validation.plan.name,
+          planType: validation.plan.planType,
+          price: validation.plan.price,
+          songsIncluded: validation.plan.songsIncluded,
+          pricePerSong: validation.plan.pricePerSong
+        });
+        router.push(`/create-song?plan_id=${result.id}`);
+      }
+    } catch (error) {
+      console.error('Error selecting plan:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save plan selection",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -116,7 +152,10 @@ export default function PricingSection() {
                       variant={tier.popular ? "gradient" : "default"}
                       className="w-full"
                       onClick={() => handlePlanSelect(tier.planType)}
-                    />
+                      disabled={isLoading === tier.planType}
+                    >
+                      {isLoading === tier.planType ? "Saving..." : "Get Started"}
+                    </GetStartedButton>
                   </div>
                 </div>
               </div>

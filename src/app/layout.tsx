@@ -3,7 +3,8 @@ import { Poppins, Outfit } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { SiteFooter } from "@/components/layout/site-footer"
 import { Navbar } from "@/components/navigation/navbar"
-import { PricingProvider } from '@/providers/pricing-provider';
+import { ClientProviders } from "@/components/providers/client-providers"
+import { SupabaseAuthProvider } from '@/providers/supabase-auth-provider';
 
 import "./globals.css"
 
@@ -19,17 +20,29 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Muisique - Custom Songs Created Just for You",
-  description: "Create personalized, custom songs for your special moments. Professional quality music delivered within 24 hours.",
+  title: "Musique - Your Personal Song Creation Service",
+  description: "Get your own personalized song created by professional musicians.",
+  keywords: [
+    "personalized songs",
+    "custom music",
+    "music creation",
+    "custom songs",
+    "personal music",
+    "unique songs",
+    "special occasion songs",
+    "custom lyrics",
+    "personal lyrics",
+    "music gifts",
+  ],
 }
 
 interface RootLayoutProps {
   children: React.ReactNode
 }
 
-export default async function RootLayout({ children }: RootLayoutProps) {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" suppressHydrationWarning className="scroll-smooth light">
+    <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
       </head>
@@ -44,13 +57,17 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         )}
         suppressHydrationWarning
       >
-        <Navbar />
-        <main className="flex-1 w-full mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <PricingProvider>
-            {children}
-          </PricingProvider>
-        </main>
-        <SiteFooter />
+        <div className="relative flex min-h-screen flex-col">
+          <ClientProviders>
+            <Navbar />
+            <SupabaseAuthProvider>
+              <main className="flex-1 w-full mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+                {children}
+              </main>
+            </SupabaseAuthProvider>
+            <SiteFooter />
+          </ClientProviders>
+        </div>
       </body>
     </html>
   )

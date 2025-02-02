@@ -4,32 +4,57 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSongStore } from '@/store/song-store';
 import { CreateSongForm } from '@/components/forms/create-song-form';
+import { PlanService } from '@/services/plan-service';
+import { toast } from '@/components/ui/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
-interface CreateSongPageProps {
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
-
-function useRedirectIfNoPlan(): void {
+export default function CreateSongPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { formData, setFormData } = useSongStore();
-  
+  const { setFormData } = useSongStore();
+
   useEffect(() => {
-    const plan = searchParams?.get('plan');
+    const planId = searchParams?.get('plan_id');
     
-    if (!plan && !formData.plan) {
+    if (!planId) {
       router.push('/choose-plan');
       return;
     }
 
-    if (plan && plan !== formData.plan) {
-      setFormData({ plan });
-    }
-  }, [searchParams, formData.plan, router, setFormData]);
-}
+    const verifyPlan = async () => {
+      try {
+        const plan = await PlanService.verifyPlanSelection(planId);
+        
+        if (!plan) {
+          toast({
+            title: "Plan Selection Required",
+            description: "Please select a plan to continue",
+            variant: "destructive",
+          });
+          router.push('/choose-plan');
+          return;
+        }
 
-export default function CreateSongPage({ searchParams }: CreateSongPageProps): JSX.Element {
-  useRedirectIfNoPlan();
+        setFormData({
+          plan: plan.name,
+          planType: plan.planType,
+          price: plan.price,
+          songsIncluded: plan.songsIncluded,
+          pricePerSong: plan.pricePerSong
+        });
+      } catch (error) {
+        console.error('Error verifying plan:', error);
+        toast({
+          title: "Error",
+          description: "Failed to verify plan selection",
+          variant: "destructive",
+        });
+        router.push('/choose-plan');
+      }
+    };
+
+    verifyPlan();
+  }, [router, searchParams, setFormData]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-rose-50 via-white to-rose-50 py-6 md:py-12">
@@ -48,6 +73,7 @@ export default function CreateSongPage({ searchParams }: CreateSongPageProps): J
           <CreateSongForm />
         </div>
       </div>
+      <Toaster />
     </div>
   );
 }

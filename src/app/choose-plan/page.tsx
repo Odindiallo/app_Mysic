@@ -2,26 +2,71 @@
 
 import { useRouter } from 'next/navigation';
 import { useSongStore } from '@/store/song-store';
-import { PRICING_TIERS } from '@/constants/pricing';
-import { Check } from 'lucide-react';
+import { PRICING_TIERS, type PricingTier } from '@/constants/pricing';
+import { Check, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatPrice, formatSavings, formatPricePerUnit } from '@/lib/utils/price-formatter';
+import { toast } from '@/components/ui/use-toast';
+import { useEffect, useState } from 'react';
+import { PlanService } from '@/services/plan-service';
 
-// Rules Applied:
-// - Functional Programming: Using functional component
-// - Explicit Return Types: Added return type for component and handlers
-// - Descriptive Naming: Using descriptive names
-// - Modularization: Split into smaller components
-
-interface PricingCardProps {
-  tier: (typeof PRICING_TIERS)[number];
-  onSelect: (planType: string) => void;
+// Validation types following TypeScript Usage rules
+interface PlanValidationError {
+  message: string;
+  code: 'INVALID_PLAN' | 'PLAN_NOT_FOUND' | 'PLAN_UNAVAILABLE';
 }
 
-function PricingCard({ tier, onSelect }: PricingCardProps): JSX.Element {
+interface PlanValidationResult {
+  isValid: boolean;
+  error?: PlanValidationError;
+  plan?: PricingTier;
+}
+
+// Pure function for plan validation following Functional Programming rule
+function validatePlanSelection(planType: string): PlanValidationResult {
+  if (!planType) {
+    return {
+      isValid: false,
+      error: {
+        code: 'INVALID_PLAN',
+        message: 'Please select a valid plan',
+      },
+    };
+  }
+
+  const selectedPlan = PRICING_TIERS.find(tier => tier.planType === planType);
+
+  if (!selectedPlan) {
+    return {
+      isValid: false,
+      error: {
+        code: 'PLAN_NOT_FOUND',
+        message: 'Selected plan not found',
+      },
+    };
+  }
+
+  return {
+    isValid: true,
+    plan: selectedPlan,
+  };
+}
+
+interface PricingCardProps {
+  tier: PricingTier;
+  onSelect: (planType: string) => void;
+  isSelected: boolean;
+}
+
+function PricingCard({ tier, onSelect, isSelected }: PricingCardProps): JSX.Element {
   const Icon = tier.icon;
   
   return (
-    <div className={cn("relative group", tier.popular && "md:-mt-4")}>
+    <div className={cn(
+      "relative group",
+      tier.popular && "md:-mt-4",
+      isSelected && "ring-2 ring-rose-500 ring-offset-2"
+    )}>
       {tier.popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-500 to-rose-600 text-white px-3 py-1 rounded-full text-xs font-medium z-10">
           Most Popular
@@ -32,12 +77,15 @@ function PricingCard({ tier, onSelect }: PricingCardProps): JSX.Element {
         "h-full rounded-xl p-6 bg-white border-2 transition-all duration-500 ease-in-out transform flex flex-col",
         tier.popular 
           ? "border-rose-200 shadow-lg shadow-rose-100 group-hover:shadow-xl group-hover:shadow-rose-200 group-hover:scale-[1.02]" 
-          : "border-gray-100 group-hover:border-rose-100 shadow-md group-hover:shadow-lg group-hover:scale-[1.02]"
+          : "border-gray-100 group-hover:border-rose-100 shadow-md group-hover:shadow-lg group-hover:scale-[1.02]",
+        isSelected && "border-rose-500"
       )}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="font-bold text-lg text-gray-900 group-hover:text-rose-600 transition-colors duration-300">{tier.name}</h3>
+            <h3 className="font-bold text-lg text-gray-900 group-hover:text-rose-600 transition-colors duration-300">
+              {tier.name}
+            </h3>
             <p className="text-sm text-gray-500 mt-1">{tier.description}</p>
           </div>
           <div className={cn(
@@ -55,19 +103,21 @@ function PricingCard({ tier, onSelect }: PricingCardProps): JSX.Element {
           </div>
         </div>
 
-        {/* Pricing */}
+        {/* Pricing with formatted values */}
         <div className="flex items-baseline gap-1 mb-1">
-          <span className="text-2xl font-bold text-gray-900 group-hover:text-rose-600 transition-colors duration-300">${tier.price}</span>
+          <span className="text-2xl font-bold text-gray-900 group-hover:text-rose-600 transition-colors duration-300">
+            {formatPrice(tier.price)}
+          </span>
           <span className="text-sm text-gray-500">total</span>
         </div>
 
         <div className="space-y-1 mb-4">
           <div className="text-sm text-gray-500">
-            ${tier.pricePerSong.toFixed(2)} per song
+            {formatPricePerUnit({ totalPrice: tier.price, units: tier.songsIncluded })} per song
           </div>
           {tier.savings && (
             <div className="inline-flex items-center text-xs font-medium text-green-600 bg-green-50 rounded-full px-2 py-0.5 group-hover:bg-green-100 transition-colors duration-300">
-              {tier.savings}
+              Save {tier.savings}
             </div>
           )}
         </div>
@@ -100,12 +150,14 @@ function PricingCard({ tier, onSelect }: PricingCardProps): JSX.Element {
             onClick={() => onSelect(tier.planType)}
             className={cn(
               "w-full py-2.5 px-4 rounded-lg font-medium text-sm text-center transition-all duration-300 transform hover:scale-[1.02]",
-              tier.popular
-                ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:from-rose-600 hover:to-rose-700 hover:shadow-lg hover:shadow-rose-100/50"
-                : "bg-gray-900 text-white hover:bg-rose-600 hover:shadow-lg"
+              isSelected
+                ? "bg-rose-600 text-white hover:bg-rose-700"
+                : tier.popular
+                  ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:from-rose-600 hover:to-rose-700 hover:shadow-lg hover:shadow-rose-100/50"
+                  : "bg-gray-900 text-white hover:bg-rose-600 hover:shadow-lg"
             )}
           >
-            Get Started
+            {isSelected ? 'Selected' : 'Get Started'}
           </button>
         </div>
       </div>
@@ -116,32 +168,81 @@ function PricingCard({ tier, onSelect }: PricingCardProps): JSX.Element {
 export default function ChoosePlanPage(): JSX.Element {
   const router = useRouter();
   const { setFormData } = useSongStore();
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  function handlePlanSelect(planType: string): void {
-    setFormData({ plan: planType });
-    router.push(`/create-song?plan=${planType}`);
-  }
+  const handlePlanSelect = (planType: string) => {
+    setSelectedPlan(planType);
+  };
+
+  const handleContinue = () => {
+    if (!selectedPlan) {
+      toast({
+        title: "Select a Plan",
+        description: "Please select a plan to continue",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validation = validatePlanSelection(selectedPlan);
+
+    if (!validation.isValid || !validation.plan) {
+      toast({
+        title: "Invalid Plan",
+        description: validation.error?.message || "Please select a valid plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const plan = validation.plan;
+    
+    // Generate a deterministic UUID based on the plan type
+    const planId = crypto.randomUUID();
+
+    setFormData({
+      plan: plan.name,
+      planId: planId,
+      planType: plan.planType,
+      price: plan.price,
+      songsIncluded: plan.songsIncluded,
+      pricePerSong: plan.pricePerSong,
+    });
+
+    router.push('/create-song?step=1');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-rose-50 py-12">
-      <div className="container mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-rose-600 to-rose-500">
-            Choose Your Plan
-          </h1>
-          <p className="text-gray-600">
-            Select the perfect package for your songs. Better value with more songs.
-          </p>
+    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white">
+      <div className="container max-w-6xl mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Choose Your Plan</h1>
+          <p className="text-lg text-gray-600">Select the perfect plan for your custom song</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {PRICING_TIERS.map((tier) => (
-            <PricingCard 
-              key={tier.name}
+            <PricingCard
+              key={tier.planType}
               tier={tier}
               onSelect={handlePlanSelect}
+              isSelected={selectedPlan === tier.planType}
             />
           ))}
+        </div>
+
+        <div className="text-center mt-12">
+          <button
+            onClick={handleContinue}
+            className={cn(
+              "px-8 py-3 rounded-full font-semibold text-white transition-all",
+              selectedPlan
+                ? "bg-rose-600 hover:bg-rose-700"
+                : "bg-gray-400 cursor-not-allowed"
+            )}
+          >
+            Continue with {selectedPlan ? PRICING_TIERS.find(t => t.planType === selectedPlan)?.name : 'Selected Plan'}
+          </button>
         </div>
       </div>
     </div>

@@ -1,171 +1,232 @@
-'use client'
+'use client';
 
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import Link from 'next/link'
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useSongStore } from '@/store/song-store'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSongStore } from '@/store/song-store';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { toast } from '@/components/ui/use-toast';
+import { Toaster } from '@/components/ui/toaster';
+import { supabase } from '@/lib/supabase/client';
 
 export default function ReviewPage() {
-  const { formData } = useSongStore()
-  const router = useRouter()
+  const router = useRouter();
+  const { formData, setSongId } = useSongStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!formData) {
-      router.push('/create-song')
+    // Redirect if no form data
+    if (!formData?.plan || !formData?.email || !formData?.name || !formData?.userId) {
+      console.log('Missing required data:', { 
+        plan: formData?.plan, 
+        email: formData?.email, 
+        name: formData?.name,
+        userId: formData?.userId
+      });
+      toast({
+        title: "Missing Information",
+        description: "Please complete the song creation form first.",
+        variant: "destructive",
+      });
+      router.push('/create-song');
+      return;
     }
-  }, [formData, router])
+  }, [formData, router]);
 
-  if (!formData) return null
+  if (!formData?.plan || !formData?.email || !formData?.name || !formData?.userId) {
+    return null;
+  }
+
+  const handleProceedToPayment = async () => {
+    setIsSubmitting(true);
+    try {
+      // Log the data we're about to send
+      console.log('Creating song request with data:', {
+        user_id: formData.userId,
+        user_email: formData.email,
+        title: formData.occasion || 'Untitled',
+        description: formData.message || '',
+        styles: formData.styles || [],
+        tempos: formData.tempos || [],
+        similar_songs: [],
+        additional_details: formData.additionalInfo || '',
+        plan_id: formData.planId || '00000000-0000-0000-0000-000000000000', // Default UUID if missing
+        plan_name: formData.plan || '',
+        price: formData.price ? Math.round(formData.price * 100) : 0, // Convert to cents
+        status: 'pending',
+        payment_status: 'pending'
+      });
+
+      // Create song request in database
+      const { data: songRequest, error } = await supabase
+        .from('song_requests')
+        .insert({
+          user_id: formData.userId,
+          user_email: formData.email,
+          title: formData.occasion || 'Untitled',
+          description: formData.message || '',
+          styles: formData.styles || [],
+          tempos: formData.tempos || [],
+          similar_songs: [],
+          additional_details: formData.additionalInfo || '',
+          plan_id: formData.planId || '00000000-0000-0000-0000-000000000000', // Default UUID if missing
+          plan_name: formData.plan || '',
+          price: formData.price ? Math.round(formData.price * 100) : 0, // Convert to cents
+          status: 'pending',
+          payment_status: 'pending'
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message);
+      }
+
+      if (!songRequest) {
+        throw new Error('Failed to create song request - no data returned');
+      }
+
+      console.log('Song request created:', songRequest);
+
+      // Set the song ID in the store
+      setSongId(songRequest.id);
+
+      // Proceed to payment
+      router.push('/create-song/payment');
+    } catch (error) {
+      console.error('Error creating song request:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to process your request. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white pt-16">
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="container max-w-4xl mx-auto px-4 py-12 md:py-16 relative"
-      >
-        {/* Progress Steps */}
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mb-12"
-        >
-          <div className="flex items-center justify-between max-w-xs mx-auto">
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-sm font-medium">
-                <Check className="w-4 h-4" />
-              </div>
-              <div className="text-xs mt-2 text-gray-600">Details</div>
-            </div>
-            <div className="flex-1 h-1 bg-rose-600 mx-2"></div>
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-sm font-medium">2</div>
-              <div className="text-xs mt-2 text-gray-600">Review</div>
-            </div>
-            <div className="flex-1 h-1 bg-gray-200 mx-2"></div>
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-sm font-medium">3</div>
-              <div className="text-xs mt-2 text-gray-600">Payment</div>
-            </div>
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-rose-50 via-white to-rose-50 py-6 md:py-12">
+      <div className="container max-w-4xl mx-auto px-4">
+        <div className="space-y-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900">Review Your Song Request</h1>
+            <p className="mt-2 text-gray-600">Please review your information before proceeding to payment</p>
           </div>
-        </motion.div>
 
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-rose-600 via-rose-500 to-rose-400 bg-clip-text text-transparent mb-4">
-            Review Your Song Details
-          </h1>
-          <p className="text-lg text-gray-600">
-            Please review your song details before proceeding to payment.
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <Card className="p-6 md:p-8">
-            <div className="grid gap-6">
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
-                <div className="grid gap-4">
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Name</span>
-                    <span className="font-medium">{formData.name}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Email</span>
-                    <span className="font-medium">{formData.email}</span>
-                  </div>
-                  {formData.phone && (
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-gray-600">Phone</span>
-                      <span className="font-medium">{formData.phone}</span>
-                    </div>
-                  )}
+          <div className="grid gap-6">
+            {/* Plan Details */}
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Plan Details</h2>
+              <div className="grid gap-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Selected Plan</span>
+                  <span className="font-medium">{formData.plan}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Price</span>
+                  <span className="font-medium">${formData.price}</span>
                 </div>
               </div>
+            </Card>
 
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Song Details</h2>
-                <div className="grid gap-4">
-                  <div className="flex justify-between py-2 border-b">
+            {/* User Information */}
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Your Information</h2>
+              <div className="grid gap-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Name</span>
+                  <span className="font-medium">{formData.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Email</span>
+                  <span className="font-medium">{formData.email}</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Song Details */}
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Song Details</h2>
+              <div className="grid gap-4">
+                {formData.occasion && (
+                  <div className="flex justify-between">
                     <span className="text-gray-600">Occasion</span>
-                    <span className="font-medium capitalize">{formData.occasion}</span>
+                    <span className="font-medium">{formData.occasion}</span>
                   </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Genre</span>
-                    <span className="font-medium capitalize">{formData.genre}</span>
+                )}
+                {formData.recipientName && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Recipient Name</span>
+                    <span className="font-medium">{formData.recipientName}</span>
                   </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Mood</span>
-                    <span className="font-medium capitalize">{formData.mood}</span>
+                )}
+                {formData.styles && formData.styles.length > 0 && (
+                  <div>
+                    <span className="text-gray-600 block mb-2">Music Styles</span>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.styles.map((style) => (
+                        <span key={style} className="px-3 py-1 bg-rose-100 text-rose-700 rounded-full text-sm">
+                          {style}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Lyrics Inspiration</h2>
-                <p className="text-gray-600 bg-gray-50 p-4 rounded-lg">
-                  {formData.lyricsInspiration}
-                </p>
-                {formData.specialRequests && (
-                  <div className="mt-4">
-                    <h3 className="font-medium mb-2">Special Requests</h3>
-                    <p className="text-gray-600 bg-gray-50 p-4 rounded-lg">
-                      {formData.specialRequests}
-                    </p>
+                )}
+                {formData.tempos && formData.tempos.length > 0 && (
+                  <div>
+                    <span className="text-gray-600 block mb-2">Preferred Tempos</span>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.tempos.map((tempo) => (
+                        <span key={tempo} className="px-3 py-1 bg-rose-100 text-rose-700 rounded-full text-sm">
+                          {tempo}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {formData.message && (
+                  <div>
+                    <span className="text-gray-600 block mb-2">Your Message</span>
+                    <p className="text-gray-800 whitespace-pre-wrap">{formData.message}</p>
+                  </div>
+                )}
+                {formData.additionalInfo && (
+                  <div>
+                    <span className="text-gray-600 block mb-2">Additional Information</span>
+                    <p className="text-gray-800 whitespace-pre-wrap">{formData.additionalInfo}</p>
                   </div>
                 )}
               </div>
+            </Card>
 
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Delivery Preferences</h2>
-                <div className="grid gap-4">
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Delivery Date</span>
-                    <span className="font-medium">{new Date(formData.deliveryDate).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">Format</span>
-                    <span className="font-medium capitalize">{formData.format}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 pt-8 mt-8 border-t border-gray-200">
+            {/* Actions */}
+            <div className="flex justify-between items-center pt-4">
               <Button
-                type="button"
                 variant="outline"
-                onClick={() => router.push('/create-song')}
-                className="w-full sm:w-auto order-2 sm:order-1"
+                onClick={() => router.push('/create-song?step=3')}
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Details
+                Edit Information
               </Button>
-              <Button 
-                onClick={() => router.push('/create-song/payment')}
-                className="w-full sm:w-auto sm:ml-auto order-1 sm:order-2 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white py-6"
+              <Button
+                onClick={handleProceedToPayment}
+                disabled={isSubmitting}
               >
-                Proceed to Payment
-                <ArrowRight className="w-4 h-4 ml-2" />
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  'Proceed to Payment'
+                )}
               </Button>
             </div>
-          </Card>
-        </motion.div>
-      </motion.div>
+          </div>
+        </div>
+      </div>
+      <Toaster />
     </div>
-  )
+  );
 }
