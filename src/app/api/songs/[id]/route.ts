@@ -7,12 +7,15 @@ const paymentStatusSchema = z.object({
   payment_status: z.enum(['pending', 'completed', 'failed'])
 });
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+type RouteContext = {
+  params: {
+    id: string;
+  };
+};
+
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { data, error } = await SongService.getSongRequest(params.id);
+    const { data, error } = await SongService.getSongRequest(context.params.id);
     
     if (error) {
       return NextResponse.json({ error }, { status: 400 });
@@ -35,10 +38,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const body = await request.json();
     
@@ -46,12 +46,19 @@ export async function PATCH(
     const validatedData = paymentStatusSchema.parse(body);
     
     const { success, error } = await SongService.updatePaymentStatus(
-      params.id,
+      context.params.id,
       validatedData.payment_status
     );
     
-    if (!success) {
+    if (error) {
       return NextResponse.json({ error }, { status: 400 });
+    }
+    
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Failed to update payment status' },
+        { status: 500 }
+      );
     }
     
     return NextResponse.json({ success: true });
@@ -63,7 +70,7 @@ export async function PATCH(
       );
     }
     
-    console.error('Error updating song request:', err);
+    console.error('Error updating payment status:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
